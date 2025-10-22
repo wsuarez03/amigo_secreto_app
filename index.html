@@ -116,7 +116,7 @@
 
     async function eliminar(id) {
       if (!confirm("¿Seguro que deseas eliminar este registro?")) return;
-      await fetch(`/api/eliminar/${id}`, { method: 'DELETE' });
+      await fetch(`https://amigo-secreto-backend.onrender.com/api/eliminar/${id}`), { method: 'DELETE' });
       cargarRegalos();
     }
 
@@ -124,7 +124,7 @@
       const nuevo1 = prompt("Nuevo regalo 1:");
       const nuevo2 = prompt("Nuevo regalo 2:");
       const nuevo3 = prompt("Nuevo regalo 3:");
-      await fetch(`/api/editar/${id}`, {
+      await fetch(`https://amigo-secreto-backend.onrender.com/api/editar/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ regalo1: nuevo1, regalo2: nuevo2, regalo3: nuevo3 })
@@ -136,3 +136,4 @@
   </script>
 </body>
 </html>
+
