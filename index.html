@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amigo Secreto 🎁</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; margin: 30px; background: #fafafa; color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .add-btn { background: #4CAF50; color: white; }
+    .admin-btn { background: #2196F3; color: white; }
+    .delete-btn { background: #f44336; color: white; }
+    .edit-btn { background: #ff9800; color: white; }
+    #formulario, #adminPanel { display: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🎁 Lista de Regalos - Amigo Secreto</h1>
+
+  <table id="tablaRegalos">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Regalo 1</th>
+        <th>Regalo 2</th>
+        <th>Regalo 3</th>
+        <th id="accionesHeader" style="display:none;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div style="margin-top:20px;">
+    <button class="add-btn" onclick="mostrarFormulario()">➕ Registrar regalos</button>
+    <button class="admin-btn" onclick="modoAdmin()">🔑 Administrador</button>
+  </div>
+
+  <!-- Formulario -->
+  <div id="formulario">
+    <h3>Registrar regalos</h3>
+    <input type="text" id="nombre" placeholder="Tu nombre" required><br><br>
+    <input type="text" id="regalo1" placeholder="Regalo 1" required><br><br>
+    <input type="text" id="regalo2" placeholder="Regalo 2" required><br><br>
+    <input type="text" id="regalo3" placeholder="Regalo 3" required><br><br>
+    <button onclick="guardarRegalo()">Guardar</button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://evxwafsndfvsgkwkkxpo.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2eHdhZnNuZGZ2c2drd2treHBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNDk2MzIsImV4cCI6MjA3NjcyNTYzMn0.NsHB8QJkrpbMOXJ2-tQgJ7wGDCgTsQst8RDRw8gGmE0";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let esAdmin = false;
+
+    async function cargarRegalos() {
+      const { data, error } = await supabase.from('regalos').select('*');
+      if (error) { console.error(error); return; }
+
+      const tbody = document.querySelector("#tablaRegalos tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(r => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td>${r.nombre}</td>
+          <td>${r.regalo1}</td>
+          <td>${r.regalo2}</td>
+          <td>${r.regalo3}</td>
+          ${esAdmin ? `
+          <td>
+            <button class='edit-btn' onclick="editar(${r.id})">Editar</button>
+            <button class='delete-btn' onclick="eliminar(${r.id})">Eliminar</button>
+          </td>` : ""}
+        `;
+        tbody.appendChild(fila);
+      });
+
+      document.getElementById("accionesHeader").style.display = esAdmin ? "table-cell" : "none";
+    }
+
+    async function guardarRegalo() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const regalo1 = document.getElementById("regalo1").value.trim();
+      const regalo2 = document.getElementById("regalo2").value.trim();
+      const regalo3 = document.getElementById("regalo3").value.trim();
+
+      if (!nombre || !regalo1 || !regalo2 || !regalo3) return alert("Completa todos los campos");
+
+      const { error } = await supabase.from('regalos').insert([{ nombre, regalo1, regalo2, regalo3 }]);
+      if (error) {
+        alert("Error guardando regalo: " + error.message);
+      } else {
+        alert("🎁 Registro guardado");
+        document.getElementById("formulario").style.display = "none";
+        cargarRegalos();
+      }
+    }
+
+    function mostrarFormulario() {
+      document.getElementById("formulario").style.display = "block";
+    }
+
+    function modoAdmin() {
+      const clave = prompt("Introduce la clave de administrador:");
+      if (clave === "admin123") {
+        esAdmin = true;
+        alert("Modo administrador activado");
+        cargarRegalos();
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
+
+    async function eliminar(id) {
+      if (!confirm("¿Seguro que deseas eliminar este registro?")) return;
+      await fetch(`/api/eliminar/${id}`, { method: 'DELETE' });
+      cargarRegalos();
+    }
+
+    async function editar(id) {
+      const nuevo1 = prompt("Nuevo regalo 1:");
+      const nuevo2 = prompt("Nuevo regalo 2:");
+      const nuevo3 = prompt("Nuevo regalo 3:");
+      await fetch(`/api/editar/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regalo1: nuevo1, regalo2: nuevo2, regalo3: nuevo3 })
+      });
+      cargarRegalos();
+    }
+
+    cargarRegalos();
+  </script>
+</body>
+</html>
